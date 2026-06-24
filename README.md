@@ -180,16 +180,20 @@ skipped and `failed_batches` in metadata tells you how many were lost.
       "id": 1,
       "type": "multiple_choice",
       "question": "What is the average time complexity of quicksort?",
-      "options": ["O(n)", "O(n log n)", "O(n²)", "O(log n)"],
-      "correct_answer": 1,
-      "explanation": "Quicksort averages O(n log n) with good pivot selection."
+      "options": [
+        {"text": "O(n)", "rationale": "Incorrect. Linear time only applies to specific cases like searching in unsorted arrays."},
+        {"text": "O(n log n)", "rationale": "Correct. Quicksort averages O(n log n) with good pivot selection and balanced partitions."},
+        {"text": "O(n²)", "rationale": "Incorrect. This is the worst-case complexity when the pivot selection is poor (e.g., already sorted array with first/last element as pivot)."},
+        {"text": "O(log n)", "rationale": "Incorrect. Logarithmic time applies to operations like binary search, not full sorting algorithms."}
+      ],
+      "correct_answer": 1
     },
     {
       "id": 2,
       "type": "true_false",
       "question": "Mergesort is a stable sorting algorithm.",
       "correct_answer": true,
-      "explanation": "Mergesort preserves the relative order of equal elements."
+      "explanation": "Mergesort preserves the relative order of equal elements, making it stable."
     }
   ]
 }

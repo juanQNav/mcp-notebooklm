@@ -22,7 +22,9 @@ Requirements:
 and half true_false
 - Language for questions, options, and explanations: {language}
 - Question IDs must go from {start_id} to {end_id}
-- Each question MUST include an explanation for the correct answer
+- For multiple_choice: each option MUST include a rationale explaining \
+why it is correct or incorrect
+- For true_false: include an explanation for the correct answer
 - Questions should test understanding, not just memorization
 
 Return ONLY a valid JSON object. No markdown code fences, \
@@ -33,16 +35,20 @@ no text outside the JSON. Use this exact structure:
       "id": {start_id},
       "type": "multiple_choice",
       "question": "Question text here?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_answer": 0,
-      "explanation": "Why option A (index 0) is correct."
+      "options": [
+        {{"text": "Option A", "rationale": "Why this is correct/incorrect"}},
+        {{"text": "Option B", "rationale": "Why this is correct/incorrect"}},
+        {{"text": "Option C", "rationale": "Why this is correct/incorrect"}},
+        {{"text": "Option D", "rationale": "Why this is correct/incorrect"}}
+      ],
+      "correct_answer": 0
     }},
     {{
       "id": {next_id},
       "type": "true_false",
       "question": "Statement here.",
       "correct_answer": true,
-      "explanation": "Why this is true."
+      "explanation": "Why this is true/false."
     }}
   ]
 }}
@@ -201,6 +207,12 @@ class NotebookLMService:
                 opts = q.get("options")
                 if not isinstance(opts, list) or len(opts) < 2:
                     continue
+                # Validate each option has text and rationale
+                for opt in opts:
+                    if not isinstance(opt, dict):
+                        continue
+                    if "text" not in opt or "rationale" not in opt:
+                        continue
             elif qtype == "true_false":
                 if "correct_answer" not in q:
                     continue
