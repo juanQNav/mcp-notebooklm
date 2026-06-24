@@ -10,12 +10,12 @@ using [`FastMCP`](https://github.com/modelcontextprotocol/python-sdk).
 
 A stdio MCP server with four tools:
 
-| Tool                                              | Purpose                                                                   |
-| ------------------------------------------------- | ------------------------------------------------------------------------- |
-| `list_notebooks()`                                | List every notebook with `id`, `title`, `source_count`.                   |
-| `find_notebook(title)`                            | Case-insensitive partial match over notebook titles.                      |
-| `ask_notebook(notebook_id, question)`             | Ask a question; returns the grounded answer from NotebookLM.              |
-| `generate_quiz(notebook_id, num_questions, ...)`  | Generate quiz JSON with multiple_choice / true_false questions in batches. |
+| Tool                                             | Purpose                                                                    |
+| ------------------------------------------------ | -------------------------------------------------------------------------- |
+| `list_notebooks()`                               | List every notebook with `id`, `title`, `source_count`.                    |
+| `find_notebook(title)`                           | Case-insensitive partial match over notebook titles.                       |
+| `ask_notebook(notebook_id, question)`            | Ask a question; returns the grounded answer from NotebookLM.               |
+| `generate_quiz(notebook_id, num_questions, ...)` | Generate quiz JSON with multiple_choice / true_false questions in batches. |
 
 The service (`src/mcp_notebooklm/service.py`) wraps the async `NotebookLMClient`
 and applies two safety rails so the host LLM never hangs:
@@ -48,7 +48,16 @@ uv sync
 This installs the project (including the `notebooklm-py[browser]` extra, which
 pulls Playwright) and exposes the `mcp-notebooklm` console script.
 
-## 2. Authenticate with NotebookLM
+## 2. Install Playwright browser (one-time)
+
+notebooklm-py[browser] installs the Playwright Python package, but the Chromium
+browser binary must be downloaded separately.
+
+uv run playwright install chromium
+
+This is a one-time step (~170 MB) and must be done before the first login.
+
+## 3. Authenticate with NotebookLM
 
 The first run downloads Chromium (~170 MB) and opens a Google sign-in window.
 Auth state is written to `data/auth.json` and reused on subsequent calls.
@@ -75,7 +84,7 @@ To refresh cookies silently (cron / launchd / systemd):
 notebooklm auth refresh --quiet
 ```
 
-## 3. Register with opencode
+## 4. Register with opencode
 
 Add the server to `~/.config/opencode/opencode.json`:
 
@@ -104,7 +113,7 @@ immediately.
 > The `timeout` (120s) covers the worst-case ask path: 10s queue + 60s ask +
 > overhead. Raise it if you see transport resets on slow networks.
 
-## 4. Use it
+## 5. Use it
 
 From inside opencode (or any MCP host):
 
@@ -145,22 +154,22 @@ generate_quiz(
 
 **Parameters:**
 
-| Param           | Required | Default        | Description                                                        |
-| --------------- | -------- | -------------- | ------------------------------------------------------------------ |
-| `notebook_id`   | yes      | —              | Notebook to query                                                  |
-| `num_questions` | yes      | —              | Total questions to generate                                        |
-| `topic`         | no       | `"all sources"`| Specific topic or full notebook                                    |
-| `difficulty`    | no       | `"mixed"`      | `easy` / `medium` / `hard` / `mixed`                               |
-| `output_path`   | no       | —              | Save JSON to this path (creates directories if needed)             |
-| `cumulative`    | no       | `false`        | If `true` and file exists, merge new questions with existing ones  |
-| `language`      | no       | `"es"`         | Language for questions, options, and explanations                  |
+| Param           | Required | Default         | Description                                                       |
+| --------------- | -------- | --------------- | ----------------------------------------------------------------- |
+| `notebook_id`   | yes      | —               | Notebook to query                                                 |
+| `num_questions` | yes      | —               | Total questions to generate                                       |
+| `topic`         | no       | `"all sources"` | Specific topic or full notebook                                   |
+| `difficulty`    | no       | `"mixed"`       | `easy` / `medium` / `hard` / `mixed`                              |
+| `output_path`   | no       | —               | Save JSON to this path (creates directories if needed)            |
+| `cumulative`    | no       | `false`         | If `true` and file exists, merge new questions with existing ones |
+| `language`      | no       | `"es"`          | Language for questions, options, and explanations                 |
 
 **How batching works:**
 
-Questions are generated in batches of 15. For 50 questions, the tool makes
-4 calls to NotebookLM (15 + 15 + 15 + 5), parses each response, and merges
-them into a single JSON. If a batch fails (timeout, parse error), it's
-skipped and `failed_batches` in metadata tells you how many were lost.
+Questions are generated in batches of 15. For 50 questions, the tool makes 4
+calls to NotebookLM (15 + 15 + 15 + 5), parses each response, and merges them
+into a single JSON. If a batch fails (timeout, parse error), it's skipped and
+`failed_batches` in metadata tells you how many were lost.
 
 **Output format:**
 
@@ -181,10 +190,22 @@ skipped and `failed_batches` in metadata tells you how many were lost.
       "type": "multiple_choice",
       "question": "What is the average time complexity of quicksort?",
       "options": [
-        {"text": "O(n)", "rationale": "Incorrect. Linear time only applies to specific cases like searching in unsorted arrays."},
-        {"text": "O(n log n)", "rationale": "Correct. Quicksort averages O(n log n) with good pivot selection and balanced partitions."},
-        {"text": "O(n²)", "rationale": "Incorrect. This is the worst-case complexity when the pivot selection is poor (e.g., already sorted array with first/last element as pivot)."},
-        {"text": "O(log n)", "rationale": "Incorrect. Logarithmic time applies to operations like binary search, not full sorting algorithms."}
+        {
+          "text": "O(n)",
+          "rationale": "Incorrect. Linear time only applies to specific cases like searching in unsorted arrays."
+        },
+        {
+          "text": "O(n log n)",
+          "rationale": "Correct. Quicksort averages O(n log n) with good pivot selection and balanced partitions."
+        },
+        {
+          "text": "O(n²)",
+          "rationale": "Incorrect. This is the worst-case complexity when the pivot selection is poor (e.g., already sorted array with first/last element as pivot)."
+        },
+        {
+          "text": "O(log n)",
+          "rationale": "Incorrect. Logarithmic time applies to operations like binary search, not full sorting algorithms."
+        }
       ],
       "correct_answer": 1
     },
@@ -201,9 +222,9 @@ skipped and `failed_batches` in metadata tells you how many were lost.
 
 **Cumulative mode:**
 
-When `cumulative = true` and `output_path` exists, new questions are appended
-to the existing array and IDs are renumbered sequentially. This lets you build
-up a question bank over multiple calls.
+When `cumulative = true` and `output_path` exists, new questions are appended to
+the existing array and IDs are renumbered sequentially. This lets you build up a
+question bank over multiple calls.
 
 ## Project layout
 
