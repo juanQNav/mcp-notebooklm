@@ -8,8 +8,8 @@ from notebooklm import NotebookLMClient
 from notebooklm.types import AskResult
 
 AUTH_FILE = Path(__file__).parent.parent.parent / "data" / "auth.json"
-QUEUE_TIMEOUT = 10  # seconds
-EXECUTION_TIMEOUT = 60  # seconds
+QUEUE_TIMEOUT = 600  # seconds
+EXECUTION_TIMEOUT = 300  # seconds
 QUIZ_BATCH_SIZE = 15
 
 QUIZ_PROMPT_TEMPLATE = """\
@@ -283,9 +283,7 @@ class NotebookLMService:
 
             if cumulative and path.exists():
                 try:
-                    existing = json.loads(
-                        path.read_text(encoding="utf-8")
-                    )
+                    existing = json.loads(path.read_text(encoding="utf-8"))
                     prev = existing.get("questions", [])
                     offset = len(prev)
                     for idx, q in enumerate(all_questions, offset + 1):
