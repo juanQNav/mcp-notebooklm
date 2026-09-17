@@ -48,6 +48,46 @@ async def ask_notebook(notebook_id: str, question: str) -> str:
 
 
 @mcp.tool()
+async def list_sources(notebook_id: str) -> list[dict]:
+    """
+    Get all sources from a specific NotebookLM notebook.
+
+    Args:
+        notebook_id: The ID of the notebook to query
+        (use list_notebooks to find IDs).
+    """
+    return await service.list_sources(notebook_id)
+
+
+@mcp.tool()
+async def find_source_by_title(notebook_id: str, title: str) -> list[dict]:
+    """
+    Find sources in a NotebookLM notebook by title
+    (partial match, case-insensitive).
+
+    Args:
+        notebook_id: The ID of the notebook to query
+        (use list_notebooks to find IDs).
+        title: The title or partial title to search for.
+    """
+    return await service.find_source_by_title(notebook_id, title)
+
+
+@mcp.tool()
+async def get_source(notebook_id: str, source_id: str) -> dict:
+    """
+    Get a specific source from a NotebookLM notebook.
+
+    Args:
+        notebook_id: The ID of the notebook to query
+        (use list_notebooks to find IDs).
+        source_id: The ID of the source to retrieve
+        (use list_sources to find IDs).
+    """
+    return await service.get_source(notebook_id, source_id)
+
+
+@mcp.tool()
 async def generate_quiz(
     notebook_id: str,
     num_questions: int,

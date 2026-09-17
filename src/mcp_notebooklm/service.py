@@ -135,6 +135,48 @@ class NotebookLMService:
         await self.connect()
         return await self._ask_safe(notebook_id, question)
 
+    async def list_sources(self, notebook_id: str) -> list[dict]:
+        await self.connect()
+        source_objects = await self.client.sources.list(notebook_id)
+
+        sources = []
+        for src in source_objects:
+            sources.append(
+                {
+                    "id": src.id,
+                    "title": src.title,
+                }
+            )
+        return sources
+
+    async def find_source_by_title(
+        self, notebook_id: str, title: str
+    ) -> list[dict]:
+        await self.connect()
+        sources = await self.client.sources.list(notebook_id)
+
+        return [
+            {
+                "id": src.id,
+                "title": src.title,
+            }
+            for src in sources
+            if title.lower() in str(src.title).lower()
+        ]
+
+    async def get_source(self, notebook_id: str, source_id: str) -> dict:
+        await self.connect()
+        source = await self.client.sources.get(notebook_id, source_id)
+        return {
+            "id": source.id,
+            "title": source.title,
+            "url": source.url,
+            "download_url": source.download_url,
+            "created_at": source.created_at.isoformat()
+            if source.created_at is not None
+            else "",
+        }
+
     # ── Quiz generation ──────────────────────────────────────────────
 
     def _build_quiz_prompt(
