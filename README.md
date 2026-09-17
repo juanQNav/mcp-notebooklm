@@ -64,7 +64,7 @@ Auth state is written to `data/auth.json` and reused on subsequent calls.
 
 ```bash
 # one-time login (interactive — finishes in the browser)
-uv run notebooklm login --storage-path ./data/auth.json
+uv run notebooklm login --storage ./data/auth.json
 ```
 
 The login command is provided by the upstream `notebooklm-py` CLI; see
